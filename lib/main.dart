@@ -41,7 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
   var text = "Какой-то текст";
 
   /// Значение для чекбокса
-  var isChecked = false;
+  var isChecked = true;
 
   /// При каком значение перестает сжиматься пунктирная линия
   var shrinkLimit = 240;
@@ -53,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
   var containerWidth = 0.0;
 
   /// Коэффициент для начального значения ширины
-  var startMultiplier = 2;
+  var startMultiplier = 3;
   @override
   Widget build(BuildContext context) {
     var screenSize = MediaQuery.of(context).size;
