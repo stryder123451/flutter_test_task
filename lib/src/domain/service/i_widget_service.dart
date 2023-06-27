@@ -4,6 +4,15 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_test_task/src/domain/interface/i_widget.dart';
 
 class WidgetService implements IWidget {
+  /// Отступы для элемента внутри ряда
+  var rowPadding = 5.0;
+
+  /// Минимальная ширина среднего элемента
+  var middleWidgetMinimalWidth = 10.0;
+
+  /// Коэффициент заполнения
+  var flexCoefficient = 10;
+
   @override
   Widget generateResizableRow(
       double cardWidth, Widget textWidget, Widget dotWidget, bool isChecked) {
@@ -12,7 +21,7 @@ class WidgetService implements IWidget {
         width: cardWidth,
         child: IntrinsicHeight(
             child: Padding(
-                padding: const EdgeInsets.all(5),
+                padding: EdgeInsets.all(rowPadding),
                 child: Row(children: [
                   textWidget,
                   const VerticalDivider(
@@ -41,22 +50,27 @@ class WidgetService implements IWidget {
 
   @override
   Widget generateUnshrinkableTextWidget(String text) {
-    return FittedBox(
-        child: Text(
-      text,
-      overflow: TextOverflow.ellipsis,
-    ));
+    return Flexible(
+        child: Wrap(children: [
+      Text(
+        text,
+        overflow: TextOverflow.ellipsis,
+      )
+    ]));
   }
 
   @override
   Widget generateShrinkableDotWidget() {
-    return const SizedBox(
-      width: 10,
+    return SizedBox(
+      width: middleWidgetMinimalWidth,
     );
   }
 
   @override
   Widget generateUnshrinkableDotWidget() {
-    return const Expanded(child: DottedLine());
+    return Expanded(
+      flex: flexCoefficient,
+      child: const DottedLine(),
+    );
   }
 }

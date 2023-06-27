@@ -16,11 +16,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Flutter тестовое задание',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Flutter тестовое задание'),
     );
   }
 }
@@ -33,12 +33,12 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   ///Сервис виджетов
   final IWidget widgetService = GetIt.I.get<IWidget>();
 
   /// Значение для текста
-  var text = "Какой-то текст";
+  var text = "";
 
   /// Значение для чекбокса
   var isChecked = true;
@@ -54,70 +54,160 @@ class _MyHomePageState extends State<MyHomePage> {
 
   /// Коэффициент для начального значения ширины
   var startMultiplier = 3;
+
+  /// Радиус округления для контроллера
+  var controllerBorderRadius = 24.0;
+
+  /// Размер шрифта для контроллера
+  var textFontSize = 16.0;
+
+  /// Размер экрана
+  late Size screenSize;
+
+  /// Контроллер для ввода текста
+  TextEditingController textController =
+      TextEditingController(text: "Какой то очень длинный предлинный текст");
+
+  /// Высота для контроллера текста
+  double textControllerHeight = 70;
+
+  /// Отступы для контроллера текста
+  double textControllerPadding = 20;
+
+  /// Отступы для текста в контроллере
+  EdgeInsetsGeometry edgeInsets = EdgeInsets.fromLTRB(28, 14, 0, 14);
+
+  /// Коэффициент изменения слайдер во время уменьшения экрана
+  double screenResizeSafeCoefficient = 0.8;
+
+  /// Минимальная безопасная ширина экрана
+  double safeScreenWidth = 10;
+
+  /// Толщина границ контроллера
+  double controllerBorderWidth = 3;
+
   @override
   Widget build(BuildContext context) {
-    var screenSize = MediaQuery.of(context).size;
+    screenSize = MediaQuery.of(context).size;
+    try {
+      return Scaffold(
+          appBar: AppBar(
+            title: Text(widget.title),
+          ),
+          body: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+            var maxScreenWidth = constraints.maxWidth;
 
-    return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-        ),
-        body: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-          double cardWidth = containerWidth == 0
-              ? (minimumWidth * startMultiplier)
-              : containerWidth;
-          var textWidget = cardWidth <= shrinkLimit
-              ? widgetService.generateShrinkableTextWidget(text)
-              : widgetService.generateUnshrinkableTextWidget(text);
-          var dotWidget = cardWidth <= shrinkLimit
-              ? widgetService.generateShrinkableDotWidget()
-              : widgetService.generateUnshrinkableDotWidget();
-          return Column(children: [
-            Slider(
-              max: constraints.maxWidth,
-              min: minimumWidth,
-              value: cardWidth,
-              onChanged: (value) {
-                setState(() {
-                  cardWidth = value;
-                  containerWidth = value;
-                });
-                print(value);
-              },
-            ),
-            widgetService.generateResizableRow(
-                cardWidth, textWidget, dotWidget, isChecked)
-          ]);
-        }));
+            double minCardWidth = minimumWidth > constraints.maxWidth
+                ? safeScreenWidth
+                : minimumWidth;
+
+            double cardWidth =
+                (containerWidth == 0 || containerWidth > maxScreenWidth)
+                    ? calculateSliderOverflow(maxScreenWidth)
+                    : containerWidth;
+
+            var textWidget = cardWidth <= shrinkLimit
+                ? widgetService.generateShrinkableTextWidget(text)
+                : widgetService.generateUnshrinkableTextWidget(text);
+            var dotWidget = cardWidth <= shrinkLimit
+                ? widgetService.generateShrinkableDotWidget()
+                : widgetService.generateUnshrinkableDotWidget();
+
+            return Column(children: [
+              Slider(
+                max: maxScreenWidth,
+                min: minCardWidth,
+                label: cardWidth.round().toString(),
+                value: cardWidth,
+                onChanged: (value) {
+                  setState(() {
+                    cardWidth = value;
+                    containerWidth = value;
+                  });
+                },
+              ),
+              const Divider(),
+              widgetService.generateResizableRow(
+                  cardWidth, textWidget, dotWidget, isChecked),
+              const Divider(),
+              Padding(
+                padding: EdgeInsets.only(
+                    left: textControllerPadding, right: textControllerPadding),
+                child: SizedBox(
+                  height: textControllerHeight,
+                  width: screenSize.width,
+                  child: TextField(
+                    controller: textController,
+                    keyboardType: TextInputType.multiline,
+                    style: TextStyle(fontSize: textFontSize),
+                    decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(
+                                Radius.circular(controllerBorderRadius)),
+                            borderSide: BorderSide(
+                                width: controllerBorderWidth,
+                                color: Colors.transparent)),
+                        contentPadding: edgeInsets,
+                        filled: true,
+                        hintText: "Введите текст для отображения",
+                        prefixIcon: const Icon(
+                          Icons.swap_horizontal_circle,
+                          color: Colors.black,
+                        ),
+                        border: OutlineInputBorder(
+                            borderSide: const BorderSide(color: Colors.grey),
+                            borderRadius: BorderRadius.all(
+                                Radius.circular(controllerBorderRadius)))),
+                  ),
+                ),
+              )
+            ]);
+          }));
+    } catch (e) {
+      return Scaffold(
+          body: Center(
+              child: Column(
+        children: const [
+          Text("Что-то не так :С ...."),
+          CircularProgressIndicator(),
+        ],
+      )));
+    }
   }
 
-  Container generateResizableRow(
-      double cardWidth, Widget textWidget, Widget dotWidget) {
-    return Container(
-        decoration: BoxDecoration(border: Border.all(color: Colors.black)),
-        width: cardWidth,
-        child: IntrinsicHeight(
-            child: Padding(
-                padding: const EdgeInsets.all(5),
-                child: Row(children: [
-                  textWidget,
-                  const VerticalDivider(
-                    color: Colors.black,
-                  ),
-                  dotWidget,
-                  const VerticalDivider(
-                    color: Colors.black,
-                  ),
-                  Checkbox(
-                    checkColor: Colors.white,
-                    value: isChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isChecked = value!;
-                      });
-                    },
-                  )
-                ]))));
+  double calculateSliderOverflow(double maxScreenWidth) {
+    return maxScreenWidth * screenResizeSafeCoefficient < minimumWidth
+        ? minimumWidth
+        : maxScreenWidth * screenResizeSafeCoefficient;
+  }
+
+  @override
+  void initState() {
+    text = textController.text;
+    textController.addListener(() {
+      setState(() {
+        text = textController.text;
+      });
+    });
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    textController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    setState(() {
+      screenSize = MediaQuery.of(context).size;
+      containerWidth > screenSize.width
+          ? containerWidth = screenSize.width
+          : containerWidth;
+    });
   }
 }
